@@ -79,7 +79,7 @@ export const analyzePair = createServerFn({ method: "POST" })
     ].join("\n");
 
     const prompt = `You are a disciplined technical forex analyst.
-Analyze the market data below and produce a structured trade evaluation.
+Analyze the market data below and produce a structured trade evaluation as JSON.
 
 Rules:
 - Use ONLY the numbers provided. Do not invent news or fundamentals.
@@ -88,15 +88,24 @@ Rules:
 - Prices must use the same scale/decimals as the data.
 - Keep rationale concise and specific.
 
+Return ONLY valid JSON (no markdown, no prose) matching exactly this shape:
+{
+  "trend": { "direction": "bullish"|"bearish"|"neutral", "strength": "weak"|"moderate"|"strong", "summary": string },
+  "keyLevels": { "resistance": number[], "support": number[] },
+  "indicators": { "rsiRead": string, "maRead": string, "volatilityRead": string },
+  "signal": {
+    "bias": "long"|"short"|"no-trade",
+    "entry": number, "stopLoss": number, "takeProfit": number,
+    "riskRewardRatio": number, "confidence": number, "rationale": string
+  },
+  "disclaimer": string
+}
+
 MARKET DATA
 ${context}`;
 
-    const { output } = await generateText({
-      model,
-      output: Output.object({ schema: AnalysisSchema }),
-      prompt,
-    });
-    const analysis = output;
+    const { text } = await generateText({ model, prompt });
+    const analysis = AnalysisSchema.parse(extractJson(text));
 
     return {
       ...analysis,
