@@ -9,7 +9,7 @@ import "@fontsource/inter/700.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";
-import { analyzePair, getSnapshot, type ForexAnalysis } from "@/lib/forex.functions";
+import { analyzePair, getSnapshot, predictEntryTiming, type ForexAnalysis, type EntryTiming } from "@/lib/forex.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
