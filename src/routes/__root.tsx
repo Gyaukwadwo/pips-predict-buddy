@@ -85,6 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Pipwise — AI Forex Analyst" },
+      { name: "twitter:description", content: "AI-powered technical analysis and entry signals for major FX pairs, metals, and crypto." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c4d10114-2b6d-49c8-9c4e-5f987a316324" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c4d10114-2b6d-49c8-9c4e-5f987a316324" },
     ],
     links: [
       {
