@@ -9,7 +9,7 @@ import "@fontsource/inter/700.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";
-import { analyzePair, getSnapshot, type ForexAnalysis } from "@/lib/forex.functions";
+import { analyzePair, getSnapshot, predictEntryTiming, type ForexAnalysis, type EntryTiming } from "@/lib/forex.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -155,8 +155,12 @@ function AnalysisPanel({
   onClose: () => void;
 }) {
   const analyze = useServerFn(analyzePair);
+  const predictTiming = useServerFn(predictEntryTiming);
   const mut = useMutation<ForexAnalysis, Error, void>({
     mutationFn: () => analyze({ data: { pair: pairKey } }),
+  });
+  const timingMut = useMutation<EntryTiming, Error, void>({
+    mutationFn: () => predictTiming({ data: { pair: pairKey } }),
   });
 
   const a = mut.data;
@@ -344,6 +348,92 @@ function AnalysisPanel({
                 </div>
               </div>
             </section>
+
+            {/* Entry timing predictor */}
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground">Entry timing</h3>
+                {timingMut.data && (
+                  <button
+                    onClick={() => timingMut.mutate()}
+                    className="text-[10px] text-muted-foreground hover:text-foreground"
+                  >
+                    Re-predict
+                  </button>
+                )}
+              </div>
+
+              {!timingMut.data && !timingMut.isPending && !timingMut.isError && (
+                <button
+                  onClick={() => timingMut.mutate()}
+                  className="w-full rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                >
+                  Predict the right time to enter (uses hourly candles)
+                </button>
+              )}
+
+              {timingMut.isPending && (
+                <div className="h-24 animate-pulse rounded-lg bg-muted" />
+              )}
+
+              {timingMut.isError && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive-foreground">
+                  Timing prediction failed: {timingMut.error.message}
+                  <button
+                    onClick={() => timingMut.mutate()}
+                    className="ml-2 rounded border border-destructive/50 px-2 py-0.5"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {timingMut.data && (() => {
+                const t = timingMut.data;
+                const tone = t.bias === "long" ? "bull" : t.bias === "short" ? "bear" : "neutral";
+                const color =
+                  tone === "bull" ? "var(--bull)" : tone === "bear" ? "var(--bear)" : "var(--foreground)";
+                const label: Record<typeof t.action, string> = {
+                  enter_now: "Enter now",
+                  wait_pullback: "Wait for pullback",
+                  wait_breakout: "Wait for breakout",
+                  wait_confirmation: "Wait for confirmation",
+                  avoid: "Avoid",
+                };
+                return (
+                  <div className="rounded-lg border border-border bg-background/40 p-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="rounded px-2 py-0.5 font-mono text-[11px] uppercase"
+                        style={{ color, backgroundColor: "var(--secondary)" }}
+                      >
+                        {label[t.action]}
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        conf {t.confidence}/100
+                      </span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Metric label="Trigger" value={fmt(t.triggerPrice, decimals)} tone={tone} />
+                      <Metric label="Window" value={t.window} />
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">Condition</div>
+                        <p className="text-foreground/90">{t.triggerCondition}</p>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-muted-foreground">Invalidation</div>
+                        <p className="text-foreground/90">{t.invalidation}</p>
+                      </div>
+                      <p className="text-foreground/80">{t.reasoning}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </section>
+
+
 
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span>Data as of {new Date(a.asOf).toLocaleDateString()}</span>

@@ -143,3 +143,90 @@ export const getSnapshot = createServerFn({ method: "GET" })
       asOf: s.asOf,
     };
   });
+
+const TimingSchema = z.object({
+  action: z.enum(["enter_now", "wait_pullback", "wait_breakout", "wait_confirmation", "avoid"]),
+  bias: z.enum(["long", "short", "no-trade"]),
+  triggerPrice: z.number().describe("Price that triggers entry. Use current price when action is enter_now, 0 when avoid."),
+  triggerCondition: z.string().describe("Precise condition to wait for, e.g. 'Close above 1.0850 on 1h' or 'Pullback to SMA20 near 1.0810'."),
+  window: z.string().describe("Expected time window, e.g. 'next 4-12 hours', 'today's US session', '1-3 days'."),
+  invalidation: z.string().describe("What would invalidate this timing setup."),
+  confidence: z.number().describe("Confidence 0-100."),
+  reasoning: z.string().describe("2-3 sentences explaining the timing call using the intraday context."),
+});
+
+export type EntryTiming = z.infer<typeof TimingSchema> & {
+  pair: string;
+  price: number;
+  asOf: string;
+};
+
+export const predictEntryTiming = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .handler(async ({ data }): Promise<EntryTiming> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const { fetchCandles, fetchIntraday, summarize } = await import("./market.server");
+    const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
+
+    const [daily, intraday] = await Promise.all([
+      fetchCandles(data.pair, "3mo"),
+      fetchIntraday(data.pair, "60m", "1mo"),
+    ]);
+    if (daily.length < 30 || intraday.length < 30) throw new Error("Not enough market data");
+
+    const s = summarize(data.pair, daily);
+    const last = intraday[intraday.length - 1];
+    const recent = intraday.slice(-24);
+    const hi24 = Math.max(...recent.map((c) => c.h));
+    const lo24 = Math.min(...recent.map((c) => c.l));
+    const closes = intraday.slice(-40).map((c) => c.c);
+
+    const fmt = (n: number | null, d = 5) => (n == null ? "n/a" : n.toFixed(d));
+    const context = [
+      `Pair: ${data.pair}`,
+      `As of: ${new Date(last.t).toISOString()}`,
+      `Current price: ${fmt(last.c)}`,
+      `Daily trend — SMA20 ${fmt(s.sma20)} / SMA50 ${fmt(s.sma50)} / SMA200 ${fmt(s.sma200)}, RSI14 ${fmt(s.rsi14, 2)}, ATR14 ${fmt(s.atr14)}`,
+      `Daily 20d range: ${fmt(s.low20)} — ${fmt(s.high20)}`,
+      `Intraday last 24h: high ${fmt(hi24)}, low ${fmt(lo24)}`,
+      `Last 40 hourly closes: ${closes.map((c) => c.toFixed(5)).join(", ")}`,
+    ].join("\n");
+
+    const prompt = `You are a short-term forex timing analyst. Given the daily context and hourly price action below, predict WHEN to enter.
+
+Rules:
+- Choose exactly one action: enter_now, wait_pullback, wait_breakout, wait_confirmation, or avoid.
+- Anchor triggerPrice to real hourly structure (recent swing high/low, SMA, session extreme).
+- If momentum, trend, and intraday structure disagree, prefer wait_confirmation or avoid.
+- Window must be realistic for hourly data (hours to a few days).
+- Prices must match the data's decimal scale.
+
+Return ONLY valid JSON (no markdown) with this exact shape:
+{
+  "action": "enter_now"|"wait_pullback"|"wait_breakout"|"wait_confirmation"|"avoid",
+  "bias": "long"|"short"|"no-trade",
+  "triggerPrice": number,
+  "triggerCondition": string,
+  "window": string,
+  "invalidation": string,
+  "confidence": number,
+  "reasoning": string
+}
+
+MARKET DATA
+${context}`;
+
+    const gateway = createLovableAiGatewayProvider(key);
+    const model = gateway("google/gemini-3-flash-preview");
+    const { text } = await generateText({ model, prompt });
+    const timing = TimingSchema.parse(extractJson(text));
+
+    return {
+      ...timing,
+      pair: data.pair,
+      price: last.c,
+      asOf: new Date(last.t).toISOString(),
+    };
+  });

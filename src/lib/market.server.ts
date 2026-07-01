@@ -71,6 +71,38 @@ export async function fetchCandles(pair: PairKey, range = "6mo"): Promise<Candle
   return out;
 }
 
+export async function fetchIntraday(
+  pair: PairKey,
+  interval: "60m" | "30m" | "15m" = "60m",
+  range = "1mo",
+): Promise<Candle[]> {
+  const sym = YAHOO_SYMBOL[pair];
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+    sym,
+  )}?interval=${interval}&range=${range}`;
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+  if (!res.ok) throw new Error(`Intraday data failed for ${pair}: ${res.status}`);
+  const json = (await res.json()) as {
+    chart: {
+      result: {
+        timestamp: number[];
+        indicators: {
+          quote: { open: (number | null)[]; high: (number | null)[]; low: (number | null)[]; close: (number | null)[] }[];
+        };
+      }[];
+    };
+  };
+  const r = json.chart.result[0];
+  const q = r.indicators.quote[0];
+  const out: Candle[] = [];
+  for (let i = 0; i < r.timestamp.length; i++) {
+    const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i];
+    if (o == null || h == null || l == null || c == null) continue;
+    out.push({ t: r.timestamp[i] * 1000, o, h, l, c });
+  }
+  return out;
+}
+
 function sma(values: number[], period: number): number | null {
   if (values.length < period) return null;
   let s = 0;
