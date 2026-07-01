@@ -99,7 +99,7 @@ ${context}`;
     const analysis = output;
 
     return {
-      ...experimental_output,
+      ...analysis,
       pair: data.pair,
       price: s.price,
       asOf: s.asOf,
