@@ -91,11 +91,12 @@ Rules:
 MARKET DATA
 ${context}`;
 
-    const { experimental_output } = await generateText({
+    const { output } = await generateText({
       model,
-      experimental_output: Output.object({ schema: AnalysisSchema }),
+      output: Output.object({ schema: AnalysisSchema }),
       prompt,
     });
+    const analysis = output;
 
     return {
       ...experimental_output,
