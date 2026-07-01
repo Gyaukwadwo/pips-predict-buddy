@@ -155,8 +155,12 @@ function AnalysisPanel({
   onClose: () => void;
 }) {
   const analyze = useServerFn(analyzePair);
+  const predictTiming = useServerFn(predictEntryTiming);
   const mut = useMutation<ForexAnalysis, Error, void>({
     mutationFn: () => analyze({ data: { pair: pairKey } }),
+  });
+  const timingMut = useMutation<EntryTiming, Error, void>({
+    mutationFn: () => predictTiming({ data: { pair: pairKey } }),
   });
 
   const a = mut.data;
