@@ -16,6 +16,17 @@ const PairEnum = z.enum([
   "ETHUSD",
 ]);
 
+function extractJson(text: string): unknown {
+  let s = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+  const start = s.search(/[\{\[]/);
+  const end = Math.max(s.lastIndexOf("}"), s.lastIndexOf("]"));
+  if (start === -1 || end === -1) throw new Error("No JSON in AI response");
+  s = s.substring(start, end + 1);
+  try { return JSON.parse(s); } catch {
+    return JSON.parse(s.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]").replace(/[\x00-\x1F\x7F]/g, ""));
+  }
+}
+
 const AnalysisSchema = z.object({
   trend: z.object({
     direction: z.enum(["bullish", "bearish", "neutral"]),
