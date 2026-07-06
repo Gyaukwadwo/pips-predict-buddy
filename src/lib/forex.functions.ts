@@ -56,7 +56,7 @@ export type ForexAnalysis = z.infer<typeof AnalysisSchema> & {
 };
 
 export const analyzePair = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }): Promise<ForexAnalysis> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -122,7 +122,7 @@ ${context}`;
   });
 
 export const getSnapshot = createServerFn({ method: "GET" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }) => {
     const { fetchCandles, summarize } = await import("./market.server");
     const candles = await fetchCandles(data.pair, "3mo");
@@ -157,7 +157,7 @@ export type EntryTiming = z.infer<typeof TimingSchema> & {
 };
 
 export const predictEntryTiming = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }): Promise<EntryTiming> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
