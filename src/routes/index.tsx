@@ -46,7 +46,7 @@ const PAIRS = [
   { key: "ETHUSD", label: "ETH / USD", group: "Crypto" },
 ] as const;
 
-type PairKey = (typeof PAIRS)[number]["key"];
+type PairKey = string;
 
 function fmt(n: number | null | undefined, d = 4) {
   if (n == null || Number.isNaN(n)) return "—";
