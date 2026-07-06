@@ -195,12 +195,24 @@ function AnalysisPanel({
             <span className="font-mono text-primary">{pairKey}</span>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
-        >
-          Close
-        </button>
+        <div className="flex items-center gap-2">
+          {session && (
+            <button
+              onClick={() => saveMut.mutate()}
+              disabled={saveMut.isPending || saveMut.isSuccess}
+              className="rounded-md border border-primary/40 bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/15 disabled:opacity-60"
+              title="Save this pair to your list"
+            >
+              {saveMut.isSuccess ? "Saved" : saveMut.isPending ? "…" : "★ Save"}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Close
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-5">
