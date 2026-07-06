@@ -2,20 +2,9 @@
 
 export type Candle = { t: number; o: number; h: number; l: number; c: number };
 
-export type PairKey =
-  | "EURUSD"
-  | "GBPUSD"
-  | "USDJPY"
-  | "USDCHF"
-  | "AUDUSD"
-  | "USDCAD"
-  | "NZDUSD"
-  | "XAUUSD"
-  | "XAGUSD"
-  | "BTCUSD"
-  | "ETHUSD";
+export type PairKey = string;
 
-const YAHOO_SYMBOL: Record<PairKey, string> = {
+const YAHOO_SYMBOL: Record<string, string> = {
   EURUSD: "EURUSD=X",
   GBPUSD: "GBPUSD=X",
   USDJPY: "JPY=X",
@@ -25,11 +14,13 @@ const YAHOO_SYMBOL: Record<PairKey, string> = {
   NZDUSD: "NZDUSD=X",
   XAUUSD: "GC=F",
   XAGUSD: "SI=F",
+  XPTUSD: "PL=F",
+  XPDUSD: "PA=F",
   BTCUSD: "BTC-USD",
   ETHUSD: "ETH-USD",
 };
 
-export const ALL_PAIRS: PairKey[] = [
+export const ALL_PAIRS: string[] = [
   "EURUSD",
   "GBPUSD",
   "USDJPY",
@@ -43,24 +34,44 @@ export const ALL_PAIRS: PairKey[] = [
   "ETHUSD",
 ];
 
-export async function fetchCandles(pair: PairKey, range = "6mo"): Promise<Candle[]> {
-  const sym = YAHOO_SYMBOL[pair];
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-    sym,
-  )}?interval=1d&range=${range}`;
+const KNOWN_CRYPTO_BASES = new Set([
+  "BTC", "ETH", "SOL", "XRP", "ADA", "DOGE", "DOT", "MATIC", "LINK", "LTC",
+  "BCH", "AVAX", "BNB", "TRX", "ATOM", "UNI", "SHIB", "APT", "ARB", "OP",
+  "TON", "NEAR", "FIL", "ICP", "SUI", "PEPE",
+]);
+
+function candidateSymbols(pair: string): string[] {
+  const p = pair.toUpperCase().trim();
+  const mapped = YAHOO_SYMBOL[p];
+  if (mapped) return [mapped];
+  const out: string[] = [];
+  if (p.length === 6) {
+    const base = p.slice(0, 3);
+    const quote = p.slice(3);
+    if (quote === "USD" && KNOWN_CRYPTO_BASES.has(base)) out.push(`${base}-USD`);
+    out.push(`${p}=X`);
+    if (quote === "USD" && !KNOWN_CRYPTO_BASES.has(base)) out.push(`${base}-USD`);
+  }
+  out.push(p);
+  return Array.from(new Set(out));
+}
+
+async function tryFetchChart(sym: string, interval: string, range: string): Promise<Candle[] | null> {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`;
   const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-  if (!res.ok) throw new Error(`Market data failed for ${pair}: ${res.status}`);
+  if (!res.ok) return null;
   const json = (await res.json()) as {
     chart: {
-      result: {
-        timestamp: number[];
+      result?: {
+        timestamp?: number[];
         indicators: {
           quote: { open: (number | null)[]; high: (number | null)[]; low: (number | null)[]; close: (number | null)[] }[];
         };
       }[];
     };
   };
-  const r = json.chart.result[0];
+  const r = json.chart.result?.[0];
+  if (!r || !r.timestamp) return null;
   const q = r.indicators.quote[0];
   const out: Candle[] = [];
   for (let i = 0; i < r.timestamp.length; i++) {
@@ -68,39 +79,27 @@ export async function fetchCandles(pair: PairKey, range = "6mo"): Promise<Candle
     if (o == null || h == null || l == null || c == null) continue;
     out.push({ t: r.timestamp[i] * 1000, o, h, l, c });
   }
-  return out;
+  return out.length ? out : null;
+}
+
+export async function fetchCandles(pair: string, range = "6mo"): Promise<Candle[]> {
+  for (const sym of candidateSymbols(pair)) {
+    const data = await tryFetchChart(sym, "1d", range);
+    if (data && data.length) return data;
+  }
+  throw new Error(`No market data for symbol "${pair}". Try a Yahoo-compatible ticker like EURJPY, SOLUSD, or XPTUSD.`);
 }
 
 export async function fetchIntraday(
-  pair: PairKey,
+  pair: string,
   interval: "60m" | "30m" | "15m" = "60m",
   range = "1mo",
 ): Promise<Candle[]> {
-  const sym = YAHOO_SYMBOL[pair];
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-    sym,
-  )}?interval=${interval}&range=${range}`;
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-  if (!res.ok) throw new Error(`Intraday data failed for ${pair}: ${res.status}`);
-  const json = (await res.json()) as {
-    chart: {
-      result: {
-        timestamp: number[];
-        indicators: {
-          quote: { open: (number | null)[]; high: (number | null)[]; low: (number | null)[]; close: (number | null)[] }[];
-        };
-      }[];
-    };
-  };
-  const r = json.chart.result[0];
-  const q = r.indicators.quote[0];
-  const out: Candle[] = [];
-  for (let i = 0; i < r.timestamp.length; i++) {
-    const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i];
-    if (o == null || h == null || l == null || c == null) continue;
-    out.push({ t: r.timestamp[i] * 1000, o, h, l, c });
+  for (const sym of candidateSymbols(pair)) {
+    const data = await tryFetchChart(sym, interval, range);
+    if (data && data.length) return data;
   }
-  return out;
+  throw new Error(`No intraday data for symbol "${pair}".`);
 }
 
 function sma(values: number[], period: number): number | null {
