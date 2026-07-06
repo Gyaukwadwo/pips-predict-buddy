@@ -457,15 +457,172 @@ function AnalysisPanel({
   );
 }
 
+type SavedPair = { id: string; pair: string; label: string | null };
+
+function AuthSlot() {
+  const { session } = useSession();
+  if (!session) {
+    return (
+      <Link
+        to="/auth"
+        className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15"
+      >
+        Sign in
+      </Link>
+    );
+  }
+  const email = session.user.email ?? "Account";
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>
+      <button
+        onClick={async () => {
+          await supabase.auth.signOut();
+        }}
+        className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
+
+function CustomPairSlot({ onOpen }: { onOpen: (pair: string) => void }) {
+  const [value, setValue] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const v = value.trim().toUpperCase();
+    if (!/^[A-Z0-9.\-=^]{3,15}$/.test(v)) {
+      setErr("Use a ticker like EURJPY, SOLUSD, XPTUSD.");
+      return;
+    }
+    setErr(null);
+    onOpen(v);
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mb-6 rounded-xl border border-border bg-card/50 p-4"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">Analyze any pair</h3>
+          <p className="text-[11px] text-muted-foreground">
+            Type any Yahoo-compatible ticker (e.g. EURJPY, CHFJPY, SOLUSD, XPTUSD).
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value.toUpperCase())}
+          placeholder="EURJPY"
+          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm uppercase outline-none focus:border-primary"
+          maxLength={15}
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_var(--glow)] hover:brightness-110"
+        >
+          Analyze
+        </button>
+      </div>
+      {err && <p className="mt-2 text-xs text-destructive-foreground">{err}</p>}
+    </form>
+  );
+}
+
+function SavedPairsSection({
+  selected,
+  onSelect,
+}: {
+  selected: PairKey | null;
+  onSelect: (p: string) => void;
+}) {
+  const { session, ready } = useSession();
+  const qc = useQueryClient();
+  const userId = session?.user.id;
+
+  const { data: saved } = useQuery({
+    queryKey: ["saved-pairs", userId],
+    queryFn: async (): Promise<SavedPair[]> => {
+      const { data, error } = await supabase
+        .from("user_pairs")
+        .select("id, pair, label")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as SavedPair[];
+    },
+    enabled: !!userId,
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("user_pairs").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-pairs", userId] }),
+  });
+
+  if (!ready) return null;
+  if (!session) return null;
+  if (!saved || saved.length === 0) {
+    return (
+      <div className="mb-6 rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+        Your saved pairs will appear here. Open any pair and hit “Save”.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Your pairs</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {saved.map((s) => (
+          <div
+            key={s.id}
+            className={`group relative flex items-center justify-between rounded-xl border bg-card p-3 ${
+              selected === s.pair ? "border-primary" : "border-border"
+            }`}
+          >
+            <button
+              onClick={() => onSelect(s.pair)}
+              className="flex-1 text-left"
+            >
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Saved</div>
+              <div className="font-mono text-sm font-semibold">{s.pair}</div>
+              {s.label && <div className="text-[11px] text-muted-foreground">{s.label}</div>}
+            </button>
+            <button
+              onClick={() => remove.mutate(s.id)}
+              title="Remove"
+              className="rounded border border-border px-2 py-1 text-[10px] text-muted-foreground opacity-0 hover:bg-accent group-hover:opacity-100"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Index() {
   const router = useRouter();
   const [selected, setSelected] = useState<PairKey | null>(null);
   const groups = Array.from(new Set(PAIRS.map((p) => p.group)));
-  const selectedLabel = PAIRS.find((p) => p.key === selected)?.label ?? "";
+  const selectedLabel =
+    PAIRS.find((p) => p.key === selected)?.label ?? (selected ? "Custom pair" : "");
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <header className="border-b border-border/60 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -481,18 +638,23 @@ function Index() {
               <p className="text-[11px] text-muted-foreground">AI forex analyst · daily technical read</p>
             </div>
           </div>
-          <button
-            onClick={() => router.invalidate()}
-            className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
-          >
-            Refresh prices
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.invalidate()}
+              className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
+            >
+              Refresh
+            </button>
+            <AuthSlot />
+          </div>
         </div>
       </header>
 
-      {/* Body */}
       <main className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_420px]">
         <div>
+          <CustomPairSlot onOpen={(p) => setSelected(p)} />
+          <SavedPairsSection selected={selected} onSelect={(p) => setSelected(p)} />
+
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-foreground">Markets</h2>
             <p className="text-xs text-muted-foreground">
@@ -537,8 +699,8 @@ function Index() {
               <div className="mb-3 h-10 w-10 rounded-full bg-primary/15 ring-1 ring-primary/40" />
               <h3 className="text-base font-semibold">Select a pair</h3>
               <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                Pick any pair on the left to run a fresh AI-powered technical analysis and a
-                structured trade idea.
+                Pick any pair, or type your own ticker above, to run a fresh AI-powered technical
+                analysis and a structured trade idea.
               </p>
             </div>
           )}
