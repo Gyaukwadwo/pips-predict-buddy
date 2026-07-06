@@ -158,12 +158,27 @@ function AnalysisPanel({
 }) {
   const analyze = useServerFn(analyzePair);
   const predictTiming = useServerFn(predictEntryTiming);
+  const qc = useQueryClient();
+  const { session } = useSession();
   const mut = useMutation<ForexAnalysis, Error, void>({
     mutationFn: () => analyze({ data: { pair: pairKey } }),
   });
   const timingMut = useMutation<EntryTiming, Error, void>({
     mutationFn: () => predictTiming({ data: { pair: pairKey } }),
   });
+  const saveMut = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error("Sign in to save pairs");
+      const { error } = await supabase.from("user_pairs").insert({
+        user_id: session.user.id,
+        pair: pairKey,
+        label,
+      });
+      if (error && error.code !== "23505") throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-pairs", session?.user.id] }),
+  });
+
 
   const a = mut.data;
   const bias = a?.signal.bias;
