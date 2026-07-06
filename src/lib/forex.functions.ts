@@ -2,19 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 
-const PairEnum = z.enum([
-  "EURUSD",
-  "GBPUSD",
-  "USDJPY",
-  "USDCHF",
-  "AUDUSD",
-  "USDCAD",
-  "NZDUSD",
-  "XAUUSD",
-  "XAGUSD",
-  "BTCUSD",
-  "ETHUSD",
-]);
+const PairInput = z
+  .string()
+  .trim()
+  .min(3)
+  .max(15)
+  .regex(/^[A-Za-z0-9.\-=^]+$/, "Invalid ticker")
+  .transform((s) => s.toUpperCase());
+
 
 function extractJson(text: string): unknown {
   let s = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
