@@ -2,19 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 
-const PairEnum = z.enum([
-  "EURUSD",
-  "GBPUSD",
-  "USDJPY",
-  "USDCHF",
-  "AUDUSD",
-  "USDCAD",
-  "NZDUSD",
-  "XAUUSD",
-  "XAGUSD",
-  "BTCUSD",
-  "ETHUSD",
-]);
+const PairInput = z
+  .string()
+  .trim()
+  .min(3)
+  .max(15)
+  .regex(/^[A-Za-z0-9.\-=^]+$/, "Invalid ticker")
+  .transform((s) => s.toUpperCase());
+
 
 function extractJson(text: string): unknown {
   let s = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
@@ -61,7 +56,7 @@ export type ForexAnalysis = z.infer<typeof AnalysisSchema> & {
 };
 
 export const analyzePair = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }): Promise<ForexAnalysis> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -127,7 +122,7 @@ ${context}`;
   });
 
 export const getSnapshot = createServerFn({ method: "GET" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }) => {
     const { fetchCandles, summarize } = await import("./market.server");
     const candles = await fetchCandles(data.pair, "3mo");
@@ -162,7 +157,7 @@ export type EntryTiming = z.infer<typeof TimingSchema> & {
 };
 
 export const predictEntryTiming = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ pair: PairEnum }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
   .handler(async ({ data }): Promise<EntryTiming> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
