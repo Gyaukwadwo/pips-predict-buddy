@@ -74,8 +74,9 @@ export type ForexAnalysis = z.infer<typeof AnalysisSchema> & {
 };
 
 export const analyzePair = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
-  .handler(async ({ data }): Promise<ForexAnalysis> => {
+  .handler(({ data }): Promise<ForexAnalysis> => safeAiHandler("analyzePair", async () => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
