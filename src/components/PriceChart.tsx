@@ -20,10 +20,12 @@ export function PriceChart({
   overlay?: Overlay;
 }) {
   const chart = useServerFn(getChart);
+  const interval = "60m" as const;
+  const range = "1mo" as const;
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["chart", pair],
-    queryFn: () => chart({ data: { pair, range: "3mo" } }),
-    staleTime: 5 * 60_000,
+    queryKey: ["chart", pair, interval, range],
+    queryFn: () => chart({ data: { pair, interval, range } }),
+    staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
@@ -110,7 +112,7 @@ export function PriceChart({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background/40 p-2">
       <div className="mb-1 flex items-center justify-between px-1 text-[10px] text-muted-foreground">
-        <span className="font-mono uppercase tracking-widest">{pair} · daily · 3M</span>
+        <span className="font-mono uppercase tracking-widest">{pair} · 1h · 1M</span>
         <span className="flex items-center gap-3">
           <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: "var(--primary)" }} /> SMA20</span>
           <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: "var(--neutral)" }} /> SMA50</span>
