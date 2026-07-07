@@ -205,7 +205,7 @@ function AnalysisPanel({
   const a = mut.data;
   const bias = a?.signal.bias;
   const biasTone = bias === "long" ? "bull" : bias === "short" ? "bear" : "neutral";
-  const decimals = pairKey === "USDJPY" ? 3 : ["XAUUSD", "XAGUSD", "BTCUSD", "ETHUSD"].includes(pairKey) ? 2 : 4;
+  const decimals = pairDecimals(pairKey);
 
   return (
     <aside className="sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur">
