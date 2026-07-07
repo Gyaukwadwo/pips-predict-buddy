@@ -138,7 +138,7 @@ ${context}`;
       price: s.price,
       asOf: s.asOf,
     };
-  });
+  }));
 
 export const getSnapshot = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
