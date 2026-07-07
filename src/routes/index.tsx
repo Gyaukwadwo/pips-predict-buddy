@@ -12,6 +12,15 @@ import "@fontsource/jetbrains-mono/700.css";
 import { analyzePair, getSnapshot, predictEntryTiming, type ForexAnalysis, type EntryTiming } from "@/lib/forex.functions";
 import { useSession } from "@/lib/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { PriceChart } from "@/components/PriceChart";
+
+function pairDecimals(pair: string): number {
+  const p = pair.toUpperCase();
+  if (p === "USDJPY" || p.endsWith("JPY=X") || p === "JPY=X") return 3;
+  // FX 6-letter pairs
+  if (/^[A-Z]{6}$/.test(p) && !["BTCUSD", "ETHUSD", "XAUUSD", "XAGUSD", "XPTUSD", "XPDUSD"].includes(p)) return 4;
+  return 2;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
