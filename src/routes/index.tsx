@@ -238,6 +238,23 @@ function AnalysisPanel({
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-5">
+        {/* Chart is always visible; overlays populate after analysis */}
+        <PriceChart
+          pair={pairKey}
+          decimals={decimals}
+          overlay={
+            a
+              ? {
+                  entry: a.signal.bias !== "no-trade" ? a.signal.entry : null,
+                  stopLoss: a.signal.bias !== "no-trade" ? a.signal.stopLoss : null,
+                  takeProfit: a.signal.bias !== "no-trade" ? a.signal.takeProfit : null,
+                  resistance: a.keyLevels.resistance,
+                  support: a.keyLevels.support,
+                }
+              : undefined
+          }
+        />
+
         {!a && !mut.isPending && (
           <div className="rounded-xl border border-dashed border-border p-6 text-center">
             <p className="text-sm text-muted-foreground">
