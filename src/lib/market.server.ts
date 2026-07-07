@@ -18,6 +18,18 @@ const YAHOO_SYMBOL: Record<string, string> = {
   XPDUSD: "PA=F",
   BTCUSD: "BTC-USD",
   ETHUSD: "ETH-USD",
+  // Indices & volatility (Yahoo "synthetics")
+  VIX: "^VIX",
+  VIX100: "^VIX", // alias — Deriv "VIX 100" is broker-only; ^VIX is the CBOE benchmark
+  SPX500: "^GSPC",
+  US500: "^GSPC",
+  NAS100: "^NDX",
+  US30: "^DJI",
+  DXY: "DX-Y.NYB",
+  GER40: "^GDAXI",
+  UK100: "^FTSE",
+  JPN225: "^N225",
+  // Stocks (Yahoo native tickers pass through, these are just convenience aliases)
 };
 
 export const ALL_PAIRS: string[] = [
@@ -32,6 +44,11 @@ export const ALL_PAIRS: string[] = [
   "XAGUSD",
   "BTCUSD",
   "ETHUSD",
+  "VIX",
+  "SPX500",
+  "NAS100",
+  "US30",
+  "DXY",
 ];
 
 const KNOWN_CRYPTO_BASES = new Set([

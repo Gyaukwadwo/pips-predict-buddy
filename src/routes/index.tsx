@@ -12,6 +12,15 @@ import "@fontsource/jetbrains-mono/700.css";
 import { analyzePair, getSnapshot, predictEntryTiming, type ForexAnalysis, type EntryTiming } from "@/lib/forex.functions";
 import { useSession } from "@/lib/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { PriceChart } from "@/components/PriceChart";
+
+function pairDecimals(pair: string): number {
+  const p = pair.toUpperCase();
+  if (p === "USDJPY" || p.endsWith("JPY=X") || p === "JPY=X") return 3;
+  // FX 6-letter pairs
+  if (/^[A-Z]{6}$/.test(p) && !["BTCUSD", "ETHUSD", "XAUUSD", "XAGUSD", "XPTUSD", "XPDUSD"].includes(p)) return 4;
+  return 2;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +53,19 @@ const PAIRS = [
   { key: "XAGUSD", label: "XAG / USD", group: "Metals" },
   { key: "BTCUSD", label: "BTC / USD", group: "Crypto" },
   { key: "ETHUSD", label: "ETH / USD", group: "Crypto" },
+  { key: "VIX", label: "VIX · CBOE Volatility", group: "Indices & Volatility" },
+  { key: "SPX500", label: "S&P 500", group: "Indices & Volatility" },
+  { key: "NAS100", label: "Nasdaq 100", group: "Indices & Volatility" },
+  { key: "US30", label: "Dow 30", group: "Indices & Volatility" },
+  { key: "DXY", label: "US Dollar Index", group: "Indices & Volatility" },
+  { key: "GER40", label: "DAX 40", group: "Indices & Volatility" },
+  { key: "AAPL", label: "Apple", group: "Stocks" },
+  { key: "MSFT", label: "Microsoft", group: "Stocks" },
+  { key: "NVDA", label: "NVIDIA", group: "Stocks" },
+  { key: "TSLA", label: "Tesla", group: "Stocks" },
+  { key: "AMZN", label: "Amazon", group: "Stocks" },
+  { key: "GOOGL", label: "Alphabet", group: "Stocks" },
+  { key: "META", label: "Meta", group: "Stocks" },
 ] as const;
 
 type PairKey = string;
@@ -122,7 +144,7 @@ function PairCard({
 
       <div className="flex items-end justify-between gap-3">
         <div className="font-mono text-2xl font-semibold tracking-tight">
-          {isLoading ? <span className="text-muted-foreground">…</span> : isError ? "—" : fmt(data?.price, pairKey === "USDJPY" ? 3 : pairKey.startsWith("BTC") || pairKey.startsWith("ETH") || pairKey.startsWith("XAU") || pairKey.startsWith("XAG") ? 2 : 4)}
+          {isLoading ? <span className="text-muted-foreground">…</span> : isError ? "—" : fmt(data?.price, pairDecimals(pairKey))}
         </div>
         {data && <Sparkline data={data.spark} up={up} />}
       </div>
@@ -183,7 +205,7 @@ function AnalysisPanel({
   const a = mut.data;
   const bias = a?.signal.bias;
   const biasTone = bias === "long" ? "bull" : bias === "short" ? "bear" : "neutral";
-  const decimals = pairKey === "USDJPY" ? 3 : ["XAUUSD", "XAGUSD", "BTCUSD", "ETHUSD"].includes(pairKey) ? 2 : 4;
+  const decimals = pairDecimals(pairKey);
 
   return (
     <aside className="sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur">
@@ -216,6 +238,23 @@ function AnalysisPanel({
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-5">
+        {/* Chart is always visible; overlays populate after analysis */}
+        <PriceChart
+          pair={pairKey}
+          decimals={decimals}
+          overlay={
+            a
+              ? {
+                  entry: a.signal.bias !== "no-trade" ? a.signal.entry : null,
+                  stopLoss: a.signal.bias !== "no-trade" ? a.signal.stopLoss : null,
+                  takeProfit: a.signal.bias !== "no-trade" ? a.signal.takeProfit : null,
+                  resistance: a.keyLevels.resistance,
+                  support: a.keyLevels.support,
+                }
+              : undefined
+          }
+        />
+
         {!a && !mut.isPending && (
           <div className="rounded-xl border border-dashed border-border p-6 text-center">
             <p className="text-sm text-muted-foreground">
