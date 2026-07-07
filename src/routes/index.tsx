@@ -44,6 +44,19 @@ const PAIRS = [
   { key: "XAGUSD", label: "XAG / USD", group: "Metals" },
   { key: "BTCUSD", label: "BTC / USD", group: "Crypto" },
   { key: "ETHUSD", label: "ETH / USD", group: "Crypto" },
+  { key: "VIX", label: "VIX · CBOE Volatility", group: "Indices & Volatility" },
+  { key: "SPX500", label: "S&P 500", group: "Indices & Volatility" },
+  { key: "NAS100", label: "Nasdaq 100", group: "Indices & Volatility" },
+  { key: "US30", label: "Dow 30", group: "Indices & Volatility" },
+  { key: "DXY", label: "US Dollar Index", group: "Indices & Volatility" },
+  { key: "GER40", label: "DAX 40", group: "Indices & Volatility" },
+  { key: "AAPL", label: "Apple", group: "Stocks" },
+  { key: "MSFT", label: "Microsoft", group: "Stocks" },
+  { key: "NVDA", label: "NVIDIA", group: "Stocks" },
+  { key: "TSLA", label: "Tesla", group: "Stocks" },
+  { key: "AMZN", label: "Amazon", group: "Stocks" },
+  { key: "GOOGL", label: "Alphabet", group: "Stocks" },
+  { key: "META", label: "Meta", group: "Stocks" },
 ] as const;
 
 type PairKey = string;
