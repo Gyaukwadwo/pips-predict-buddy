@@ -139,6 +139,34 @@ export const getSnapshot = createServerFn({ method: "GET" })
     };
   });
 
+export const getChart = createServerFn({ method: "GET" })
+  .inputValidator((raw: unknown) =>
+    z.object({
+      pair: PairInput,
+      range: z.enum(["1mo", "3mo", "6mo", "1y"]).optional(),
+    }).parse(raw),
+  )
+  .handler(async ({ data }) => {
+    const { fetchCandles } = await import("./market.server");
+    const candles = await fetchCandles(data.pair, data.range ?? "3mo");
+    if (!candles.length) throw new Error("No data");
+    // SMA helpers
+    const closes = candles.map((c) => c.c);
+    const smaSeries = (period: number): (number | null)[] =>
+      closes.map((_, i) => {
+        if (i + 1 < period) return null;
+        let s = 0;
+        for (let k = i + 1 - period; k <= i; k++) s += closes[k];
+        return s / period;
+      });
+    return {
+      pair: data.pair,
+      candles: candles.map((c) => ({ t: c.t, o: c.o, h: c.h, l: c.l, c: c.c })),
+      sma20: smaSeries(20),
+      sma50: smaSeries(50),
+    };
+  });
+
 const TimingSchema = z.object({
   action: z.enum(["enter_now", "wait_pullback", "wait_breakout", "wait_confirmation", "avoid"]),
   bias: z.enum(["long", "short", "no-trade"]),
