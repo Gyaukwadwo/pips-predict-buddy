@@ -25,16 +25,16 @@ function pairDecimals(pair: string): number {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Pipwise — AI Forex Analyst" },
+      { title: "Forexhavmercy — AI Forex Analyst" },
       {
         name: "description",
         content:
           "Free AI-powered technical analysis of major forex pairs, gold, silver and crypto. Trend, key levels, indicators and entry signals.",
       },
-      { property: "og:title", content: "Pipwise — AI Forex Analyst" },
+      { property: "og:title", content: "Forexhavmercy — AI Forex Analyst" },
       {
         property: "og:description",
-        content: "Trend read, key levels, and AI entry signals for FX, metals and crypto.",
+        content: "Free AI-powered technical analysis of major forex pairs, gold, silver and crypto. Trend, key levels, indicators and entry signals.",
       },
     ],
   }),
