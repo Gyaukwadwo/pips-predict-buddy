@@ -162,14 +162,21 @@ export const getChart = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) =>
     z.object({
       pair: PairInput,
-      range: z.enum(["1mo", "3mo", "6mo", "1y"]).optional(),
+      interval: z.enum(["15m", "30m", "60m", "1d"]).optional(),
+      range: z.enum(["5d", "1mo", "3mo", "6mo", "1y"]).optional(),
     }).parse(raw),
   )
   .handler(async ({ data }) => {
-    const { fetchCandles } = await import("./market.server");
-    const candles = await fetchCandles(data.pair, data.range ?? "3mo");
+    const { fetchCandles, fetchIntraday } = await import("./market.server");
+    const interval = data.interval ?? "60m";
+    const range =
+      data.range ??
+      (interval === "15m" ? "5d" : interval === "30m" ? "5d" : interval === "60m" ? "1mo" : "3mo");
+    const candles =
+      interval === "1d"
+        ? await fetchCandles(data.pair, range)
+        : await fetchIntraday(data.pair, interval as "15m" | "30m" | "60m", range);
     if (!candles.length) throw new Error("No data");
-    // SMA helpers
     const closes = candles.map((c) => c.c);
     const smaSeries = (period: number): (number | null)[] =>
       closes.map((_, i) => {
@@ -180,6 +187,8 @@ export const getChart = createServerFn({ method: "GET" })
       });
     return {
       pair: data.pair,
+      interval,
+      range,
       candles: candles.map((c) => ({ t: c.t, o: c.o, h: c.h, l: c.l, c: c.c })),
       sma20: smaSeries(20),
       sma50: smaSeries(50),
