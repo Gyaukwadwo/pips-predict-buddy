@@ -272,4 +272,4 @@ ${context}`;
       price: last.c,
       asOf: new Date(last.t).toISOString(),
     };
-  });
+  }));
