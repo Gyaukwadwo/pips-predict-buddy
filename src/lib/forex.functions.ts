@@ -1,6 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+/**
+ * Wraps an AI-endpoint handler so any internal failure is logged server-side
+ * but the client only sees a generic, safe message. Prevents leaking env-var
+ * names, upstream HTTP status codes, or internal thresholds to the UI.
+ */
+function safeAiHandler<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  return fn().catch((err) => {
+    console.error(`[${label}] internal error:`, err);
+    // Preserve auth-gate rejections so the UI can prompt sign-in.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/^Unauthorized/i.test(msg)) {
+      throw new Error("Please sign in to run AI analysis.");
+    }
+    throw new Error("Analysis unavailable right now. Please try again in a moment.");
+  });
+}
 
 const PairInput = z
   .string()
@@ -56,8 +74,9 @@ export type ForexAnalysis = z.infer<typeof AnalysisSchema> & {
 };
 
 export const analyzePair = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
-  .handler(async ({ data }): Promise<ForexAnalysis> => {
+  .handler(({ data }): Promise<ForexAnalysis> => safeAiHandler("analyzePair", async () => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -119,7 +138,7 @@ ${context}`;
       price: s.price,
       asOf: s.asOf,
     };
-  });
+  }));
 
 export const getSnapshot = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
@@ -185,8 +204,9 @@ export type EntryTiming = z.infer<typeof TimingSchema> & {
 };
 
 export const predictEntryTiming = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
-  .handler(async ({ data }): Promise<EntryTiming> => {
+  .handler(({ data }): Promise<EntryTiming> => safeAiHandler("predictEntryTiming", async () => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -252,4 +272,4 @@ ${context}`;
       price: last.c,
       asOf: new Date(last.t).toISOString(),
     };
-  });
+  }));
