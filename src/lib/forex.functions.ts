@@ -204,8 +204,9 @@ export type EntryTiming = z.infer<typeof TimingSchema> & {
 };
 
 export const predictEntryTiming = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => z.object({ pair: PairInput }).parse(raw))
-  .handler(async ({ data }): Promise<EntryTiming> => {
+  .handler(({ data }): Promise<EntryTiming> => safeAiHandler("predictEntryTiming", async () => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
