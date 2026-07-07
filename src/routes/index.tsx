@@ -144,7 +144,7 @@ function PairCard({
 
       <div className="flex items-end justify-between gap-3">
         <div className="font-mono text-2xl font-semibold tracking-tight">
-          {isLoading ? <span className="text-muted-foreground">…</span> : isError ? "—" : fmt(data?.price, pairKey === "USDJPY" ? 3 : pairKey.startsWith("BTC") || pairKey.startsWith("ETH") || pairKey.startsWith("XAU") || pairKey.startsWith("XAG") ? 2 : 4)}
+          {isLoading ? <span className="text-muted-foreground">…</span> : isError ? "—" : fmt(data?.price, pairDecimals(pairKey))}
         </div>
         {data && <Sparkline data={data.spark} up={up} />}
       </div>
