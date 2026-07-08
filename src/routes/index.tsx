@@ -13,6 +13,8 @@ import { analyzePair, getSnapshot, predictEntryTiming, type ForexAnalysis, type 
 import { useSession } from "@/lib/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { PriceChart } from "@/components/PriceChart";
+import { FluidCursor } from "@/components/FluidCursor";
+import chromeMascot from "@/assets/chrome-mascot.png";
 
 function pairDecimals(pair: string): number {
   const p = pair.toUpperCase();
