@@ -690,7 +690,9 @@ function Index() {
     PAIRS.find((p) => p.key === selected)?.label ?? (selected ? "Custom pair" : "");
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen">
+      <FluidCursor />
+      <div className="relative z-10">
       <header className="px-6 pt-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -719,7 +721,16 @@ function Index() {
         </div>
       </header>
 
-      <section className="px-6 pt-16 pb-10 text-center">
+      <section className="px-6 pt-12 pb-10 text-center">
+        <div className="mx-auto mb-6 w-40 sm:w-56 md:w-64 mascot-float">
+          <img
+            src={chromeMascot}
+            alt="Pipwise chrome mascot waving hello"
+            width={1024}
+            height={1024}
+            className="h-auto w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)]"
+          />
+        </div>
         <h1 className="mx-auto max-w-4xl text-5xl font-black tracking-tight sm:text-6xl md:text-7xl">
           Trade Smarter
         </h1>
@@ -742,6 +753,7 @@ function Index() {
           </a>
         </div>
       </section>
+
 
       <main className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_420px]">
         <div>
