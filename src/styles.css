@@ -45,43 +45,43 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 1rem;
 
-  /* Base — midnight blue-black */
-  --background: oklch(0.15 0.02 250);
-  --foreground: oklch(0.96 0.01 240);
+  /* Base — soft off-white, Steppay-style */
+  --background: oklch(0.985 0.003 90);
+  --foreground: oklch(0.16 0.01 260);
 
-  --card: oklch(0.19 0.025 250);
-  --card-foreground: oklch(0.96 0.01 240);
-  --popover: oklch(0.19 0.025 250);
-  --popover-foreground: oklch(0.96 0.01 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 260);
 
-  /* Electric cyan primary */
-  --primary: oklch(0.82 0.16 195);
-  --primary-foreground: oklch(0.15 0.02 250);
+  /* Near-black primary for high-contrast pills */
+  --primary: oklch(0.18 0.01 260);
+  --primary-foreground: oklch(0.985 0.003 90);
 
-  --secondary: oklch(0.25 0.03 250);
-  --secondary-foreground: oklch(0.96 0.01 240);
+  --secondary: oklch(0.96 0.004 90);
+  --secondary-foreground: oklch(0.2 0.01 260);
 
-  --muted: oklch(0.22 0.02 250);
-  --muted-foreground: oklch(0.65 0.02 240);
+  --muted: oklch(0.955 0.004 90);
+  --muted-foreground: oklch(0.5 0.01 260);
 
-  --accent: oklch(0.28 0.04 245);
-  --accent-foreground: oklch(0.96 0.01 240);
+  --accent: oklch(0.94 0.005 90);
+  --accent-foreground: oklch(0.18 0.01 260);
 
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.985 0 0);
 
-  --border: oklch(0.28 0.02 250);
-  --input: oklch(0.25 0.02 250);
-  --ring: oklch(0.82 0.16 195);
+  --border: oklch(0.92 0.004 90);
+  --input: oklch(0.94 0.004 90);
+  --ring: oklch(0.18 0.01 260);
 
-  /* Market semantics */
-  --bull: oklch(0.78 0.19 155);       /* mint green */
-  --bear: oklch(0.68 0.22 25);        /* coral red */
-  --neutral: oklch(0.72 0.05 240);
-  --grid: oklch(0.28 0.02 250);
-  --glow: oklch(0.82 0.16 195 / 0.35);
+  /* Market semantics — kept vivid on light bg */
+  --bull: oklch(0.6 0.17 155);
+  --bear: oklch(0.58 0.22 25);
+  --neutral: oklch(0.55 0.02 260);
+  --grid: oklch(0.92 0.004 90);
+  --glow: oklch(0.18 0.01 260 / 0.12);
 }
 
 @layer base {
@@ -96,8 +96,7 @@
   }
   body {
     background-image:
-      radial-gradient(ellipse 80% 50% at 20% 0%, oklch(0.28 0.12 210 / 0.25), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 90% 20%, oklch(0.28 0.14 155 / 0.15), transparent 60%);
+      radial-gradient(ellipse 60% 40% at 50% 0%, oklch(0.94 0.02 90 / 0.6), transparent 70%);
     background-attachment: fixed;
   }
   .font-mono, code, kbd, pre { font-family: var(--font-mono); }
