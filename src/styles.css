@@ -108,3 +108,12 @@
     linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-14px) rotate(2deg); }
+}
+.mascot-float {
+  animation: mascot-float 4.5s ease-in-out infinite;
+  will-change: transform;
+}
