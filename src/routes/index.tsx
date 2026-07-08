@@ -689,25 +689,26 @@ function Index() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border/60 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/40">
-              <span className="absolute inset-0 rounded-lg bg-primary/10 blur-md" />
-              <svg viewBox="0 0 24 24" className="relative h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--primary)" }}>
+      <header className="px-6 pt-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M3 17l6-6 4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M14 7h7v7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight">Pipwise</h1>
-              <p className="text-[11px] text-muted-foreground">AI forex analyst · daily technical read</p>
-            </div>
+            <span className="text-lg font-extrabold tracking-tight">Pipwise</span>
           </div>
+          <nav className="hidden items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 shadow-sm md:flex">
+            <a href="#markets" className="rounded-full px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-accent">Markets</a>
+            <a href="#analyze" className="rounded-full px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-accent">Analyze</a>
+            <a href="#saved" className="rounded-full px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-accent">Saved</a>
+          </nav>
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.invalidate()}
-              className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
+              className="hidden rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground/80 shadow-sm hover:bg-accent sm:inline-flex"
             >
               Refresh
             </button>
@@ -716,17 +717,46 @@ function Index() {
         </div>
       </header>
 
+      <section className="px-6 pt-16 pb-10 text-center">
+        <h1 className="mx-auto max-w-4xl text-5xl font-black tracking-tight sm:text-6xl md:text-7xl">
+          Trade Smarter
+        </h1>
+        <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
+          Step up your trading with AI-powered technical analysis. Make data-driven
+          decisions with Pipwise's prescriptive market intelligence.
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <a
+            href="#markets"
+            className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background shadow-sm transition hover:opacity-90"
+          >
+            Get Started
+          </a>
+          <a
+            href="#analyze"
+            className="rounded-full border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground shadow-sm hover:bg-accent"
+          >
+            Analyze a pair
+          </a>
+        </div>
+      </section>
+
       <main className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_420px]">
         <div>
-          <CustomPairSlot onOpen={(p) => setSelected(p)} />
-          <SavedPairsSection selected={selected} onSelect={(p) => setSelected(p)} />
+          <div id="analyze">
+            <CustomPairSlot onOpen={(p) => setSelected(p)} />
+          </div>
+          <div id="saved">
+            <SavedPairsSection selected={selected} onSelect={(p) => setSelected(p)} />
+          </div>
 
-          <div className="mb-4">
-            <h2 className="text-sm font-semibold text-foreground">Markets</h2>
-            <p className="text-xs text-muted-foreground">
+          <div id="markets" className="mb-4 scroll-mt-6">
+            <h2 className="text-2xl font-extrabold tracking-tight">Markets</h2>
+            <p className="text-sm text-muted-foreground">
               Click a pair to get an AI trade evaluation with entry, stop-loss and take-profit.
             </p>
           </div>
+
 
           <div className="space-y-6">
             {groups.map((g) => (
