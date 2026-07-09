@@ -15,6 +15,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { PriceChart } from "@/components/PriceChart";
 import { FluidCursor } from "@/components/FluidCursor";
 import chromeMascot from "@/assets/chrome-mascot.png";
+import {
+  RotatingTaglines,
+  StepsSection,
+  FeaturesSection,
+  BeyondBordersSection,
+  SiteFooter,
+} from "@/components/SteppayExtras";
 
 function pairDecimals(pair: string): number {
   const p = pair.toUpperCase();
@@ -752,7 +759,9 @@ function Index() {
             Analyze a pair
           </a>
         </div>
+        <RotatingTaglines />
       </section>
+
 
 
       <main className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_420px]">
@@ -816,8 +825,14 @@ function Index() {
           )}
         </div>
       </main>
+
+      <StepsSection />
+      <FeaturesSection />
+      <BeyondBordersSection />
+      <SiteFooter />
       </div>
     </div>
+
 
   );
 }
