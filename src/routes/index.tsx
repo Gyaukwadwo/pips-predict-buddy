@@ -825,8 +825,14 @@ function Index() {
           )}
         </div>
       </main>
+
+      <StepsSection />
+      <FeaturesSection />
+      <BeyondBordersSection />
+      <SiteFooter />
       </div>
     </div>
+
 
   );
 }
