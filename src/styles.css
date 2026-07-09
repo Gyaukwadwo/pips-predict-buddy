@@ -117,3 +117,35 @@
   animation: mascot-float 4.5s ease-in-out infinite;
   will-change: transform;
 }
+
+/* Scroll-reveal: parent fades/slides itself and staggers direct children marked .reveal-child */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  will-change: opacity, transform;
+}
+.reveal.is-visible { opacity: 1; transform: none; }
+
+.reveal .reveal-child {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    color 0.3s ease;
+  will-change: opacity, transform;
+}
+.reveal.is-visible .reveal-child { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal .reveal-child {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .mascot-float { animation: none !important; }
+}
