@@ -1,4 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+// Reveal-on-scroll: adds .is-visible when the element enters the viewport.
+function useReveal<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      el.classList.add("is-visible");
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
 
 export function RotatingTaglines() {
   const items = [
@@ -8,18 +35,23 @@ export function RotatingTaglines() {
     { k: "TRADE AHEAD" },
   ];
   const [i, setI] = useState(0);
+  const ref = useReveal<HTMLDivElement>();
   useEffect(() => {
     const t = setInterval(() => setI((v) => (v + 1) % items.length), 2200);
     return () => clearInterval(t);
   }, [items.length]);
   return (
-    <div className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground">
+    <div
+      ref={ref}
+      className="reveal mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-muted-foreground"
+    >
       {items.map((it, idx) => (
         <span
           key={it.k}
-          className={`rounded-full border px-3 py-1.5 transition-all ${
+          style={{ transitionDelay: `${idx * 70}ms` }}
+          className={`reveal-child cursor-default rounded-full border px-3 py-1.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-foreground hover:text-foreground hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] ${
             i === idx
-              ? "border-foreground bg-foreground text-background"
+              ? "border-foreground bg-foreground text-background scale-105"
               : "border-border bg-card"
           }`}
         >
@@ -53,9 +85,14 @@ export function StepsSection() {
       body: "Predict the right moment to enter using hourly candles, with trigger conditions and invalidation levels.",
     },
   ];
+  const headRef = useReveal<HTMLDivElement>();
+  const gridRef = useReveal<HTMLDivElement>();
   return (
     <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="mb-10 flex items-end justify-between gap-6">
+      <div
+        ref={headRef}
+        className="reveal mb-10 flex items-end justify-between gap-6"
+      >
         <h2 className="max-w-2xl text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl">
           4 Simple Steps
         </h2>
@@ -64,17 +101,27 @@ export function StepsSection() {
           disciplined, data-first workflow.
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {steps.map((s) => (
+      <div
+        ref={gridRef}
+        className="reveal grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {steps.map((s, idx) => (
           <div
             key={s.n}
-            className="group flex flex-col justify-between rounded-3xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)]"
+            style={{ transitionDelay: `${idx * 110}ms` }}
+            className="reveal-child group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:border-foreground/40 hover:shadow-[0_30px_60px_-25px_rgba(0,0,0,0.25)]"
           >
-            <div className="mb-16 font-mono text-xs tracking-widest text-muted-foreground">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-foreground/[0.04] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            />
+            <div className="mb-16 font-mono text-xs tracking-widest text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
               {s.n}
             </div>
             <div>
-              <h3 className="text-xl font-bold tracking-tight">{s.title}</h3>
+              <h3 className="text-xl font-bold tracking-tight transition-transform duration-300 group-hover:-translate-y-0.5">
+                {s.title}
+              </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {s.body}
               </p>
@@ -105,25 +152,42 @@ export function FeaturesSection() {
       body: "Not on the list? Paste any Yahoo-compatible ticker (EURJPY, XPTUSD, SOLUSD) and analyze it instantly.",
     },
   ];
+  const headRef = useReveal<HTMLDivElement>();
+  const gridRef = useReveal<HTMLDivElement>();
   return (
     <section className="border-t border-border bg-secondary/40">
       <div className="mx-auto max-w-7xl px-6 py-20">
-        <h2 className="max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl">
-          No matter the market or timeframe, Pipwise helps you find the trade
-          and time the entry.
-        </h2>
-        <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-          Blend real-time analytics with AI reasoning to make sharper, more
-          disciplined trading decisions across every asset class.
-        </p>
-        <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
-            <div key={f.title} className="bg-card p-6">
-              <div className="mb-8 h-10 w-10 rounded-full bg-foreground/90" />
-              <h3 className="text-lg font-bold">{f.title}</h3>
+        <div ref={headRef} className="reveal">
+          <h2 className="max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl">
+            No matter the market or timeframe, Pipwise helps you find the trade
+            and time the entry.
+          </h2>
+          <p className="mt-4 max-w-2xl text-base text-muted-foreground">
+            Blend real-time analytics with AI reasoning to make sharper, more
+            disciplined trading decisions across every asset class.
+          </p>
+        </div>
+        <div
+          ref={gridRef}
+          className="reveal mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {features.map((f, idx) => (
+            <div
+              key={f.title}
+              style={{ transitionDelay: `${idx * 110}ms` }}
+              className="reveal-child group relative bg-card p-6 transition-colors duration-500 hover:bg-background"
+            >
+              <div className="mb-8 h-10 w-10 rounded-full bg-foreground/90 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-6" />
+              <h3 className="text-lg font-bold transition-transform duration-300 group-hover:-translate-y-0.5">
+                {f.title}
+              </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {f.body}
               </p>
+              <div
+                aria-hidden
+                className="absolute inset-x-6 bottom-4 h-px origin-left scale-x-0 bg-foreground transition-transform duration-500 ease-out group-hover:scale-x-100"
+              />
             </div>
           ))}
         </div>
@@ -133,25 +197,33 @@ export function FeaturesSection() {
 }
 
 export function BeyondBordersSection() {
+  const ref = useReveal<HTMLDivElement>();
   return (
     <section className="mx-auto max-w-7xl px-6 py-24 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-        Pipwise
-      </p>
-      <h2 className="mx-auto mt-4 max-w-5xl text-6xl font-black leading-[0.95] tracking-tight sm:text-7xl md:text-8xl">
-        Trade <span className="italic font-serif">Beyond</span> Borders
-      </h2>
-      <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground">
-        Global markets, one intelligent workspace. From New York opens to Tokyo
-        fixes — Pipwise is on call, 24/5.
-      </p>
-      <a
-        href="#markets"
-        className="mt-10 inline-flex items-center gap-2 rounded-full bg-foreground px-8 py-4 text-sm font-semibold text-background transition hover:opacity-90"
-      >
-        Get Started
-        <span aria-hidden>→</span>
-      </a>
+      <div ref={ref} className="reveal">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+          Pipwise
+        </p>
+        <h2 className="mx-auto mt-4 max-w-5xl text-6xl font-black leading-[0.95] tracking-tight sm:text-7xl md:text-8xl">
+          Trade <span className="italic font-serif">Beyond</span> Borders
+        </h2>
+        <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground">
+          Global markets, one intelligent workspace. From New York opens to Tokyo
+          fixes — Pipwise is on call, 24/5.
+        </p>
+        <a
+          href="#markets"
+          className="group mt-10 inline-flex items-center gap-2 rounded-full bg-foreground px-8 py-4 text-sm font-semibold text-background transition hover:opacity-90"
+        >
+          Get Started
+          <span
+            aria-hidden
+            className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+          >
+            →
+          </span>
+        </a>
+      </div>
     </section>
   );
 }
@@ -207,7 +279,7 @@ export function SiteFooter() {
                 <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {c.items.map((it) => (
                     <li key={it}>
-                      <a href="#" className="hover:text-foreground">
+                      <a href="#" className="story-link transition-colors hover:text-foreground">
                         {it}
                       </a>
                     </li>
