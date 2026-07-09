@@ -759,7 +759,9 @@ function Index() {
             Analyze a pair
           </a>
         </div>
+        <RotatingTaglines />
       </section>
+
 
 
       <main className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_420px]">
