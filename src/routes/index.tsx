@@ -15,6 +15,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { PriceChart } from "@/components/PriceChart";
 import { FluidCursor } from "@/components/FluidCursor";
 import chromeMascot from "@/assets/chrome-mascot.png";
+import {
+  RotatingTaglines,
+  StepsSection,
+  FeaturesSection,
+  BeyondBordersSection,
+  SiteFooter,
+} from "@/components/SteppayExtras";
 
 function pairDecimals(pair: string): number {
   const p = pair.toUpperCase();
