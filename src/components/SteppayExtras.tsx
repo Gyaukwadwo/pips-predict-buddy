@@ -66,7 +66,7 @@ export function RotatingTaglines() {
         <span
           key={it.k}
           style={{ transitionDelay: `${idx * 70}ms` }}
-          className={`reveal-child cursor-default rounded-full border px-3 py-1.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-foreground hover:text-foreground hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] ${
+          className={`reveal-child cursor-default rounded-full border px-3 py-1.5 [transition:transform_300ms_ease-out,border-color_300ms_ease-out,color_300ms_ease-out,box-shadow_300ms_ease-out] hover:-translate-y-0.5 hover:border-foreground hover:text-foreground hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] ${
             i === idx
               ? "border-foreground bg-foreground text-background scale-105"
               : "border-border bg-card"
