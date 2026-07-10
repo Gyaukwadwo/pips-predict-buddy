@@ -700,6 +700,7 @@ function Index() {
   return (
     <div className="relative min-h-screen">
       <FluidCursor />
+      <PerfOverlay />
       <div className="relative z-10">
       <header className="px-6 pt-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
