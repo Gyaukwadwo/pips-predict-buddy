@@ -126,12 +126,8 @@ export function StepsSection() {
           <div
             key={s.n}
             style={{ transitionDelay: `${idx * 110}ms` }}
-            className="reveal-child group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:border-foreground/40 hover:shadow-[0_30px_60px_-25px_rgba(0,0,0,0.25)]"
+            className="reveal-child group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 [transition:transform_500ms_ease-out,border-color_500ms_ease-out,box-shadow_500ms_ease-out] hover:-translate-y-1.5 hover:border-foreground/40 hover:shadow-[0_30px_60px_-25px_rgba(0,0,0,0.25)]"
           >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-foreground/[0.04] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            />
             <div className="mb-16 font-mono text-xs tracking-widest text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
               {s.n}
             </div>
