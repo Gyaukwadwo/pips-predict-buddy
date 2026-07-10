@@ -1,28 +1,45 @@
 import { useEffect, useRef, useState } from "react";
 
-// Reveal-on-scroll: adds .is-visible when the element enters the viewport.
+// Shared IntersectionObserver — one instance for the whole page instead of
+// one per component. Cheaper on lower-end devices and avoids duplicate work.
+let sharedObserver: IntersectionObserver | null = null;
+function getSharedObserver() {
+  if (typeof IntersectionObserver === "undefined") return null;
+  if (sharedObserver) return sharedObserver;
+  sharedObserver = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target as HTMLElement;
+        el.classList.add("is-visible");
+        sharedObserver!.unobserve(el);
+        // Release will-change after the animation so the browser can
+        // discard the promoted layer.
+        window.setTimeout(() => {
+          el.style.willChange = "auto";
+          el.querySelectorAll<HTMLElement>(".reveal-child").forEach((c) => {
+            c.style.willChange = "auto";
+          });
+        }, 900);
+      }
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -10% 0px" },
+  );
+  return sharedObserver;
+}
+
 function useReveal<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
+    const io = getSharedObserver();
+    if (!io) {
       el.classList.add("is-visible");
       return;
     }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-visible");
-            io.unobserve(e.target);
-          }
-        }
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
-    );
     io.observe(el);
-    return () => io.disconnect();
+    return () => io.unobserve(el);
   }, []);
   return ref;
 }
