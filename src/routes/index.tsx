@@ -14,6 +14,7 @@ import { useSession } from "@/lib/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { PriceChart } from "@/components/PriceChart";
 import { FluidCursor } from "@/components/FluidCursor";
+import { PerfOverlay } from "@/components/PerfOverlay";
 import chromeMascot from "@/assets/chrome-mascot.png";
 import {
   RotatingTaglines,
