@@ -1,28 +1,45 @@
 import { useEffect, useRef, useState } from "react";
 
-// Reveal-on-scroll: adds .is-visible when the element enters the viewport.
+// Shared IntersectionObserver — one instance for the whole page instead of
+// one per component. Cheaper on lower-end devices and avoids duplicate work.
+let sharedObserver: IntersectionObserver | null = null;
+function getSharedObserver() {
+  if (typeof IntersectionObserver === "undefined") return null;
+  if (sharedObserver) return sharedObserver;
+  sharedObserver = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target as HTMLElement;
+        el.classList.add("is-visible");
+        sharedObserver!.unobserve(el);
+        // Release will-change after the animation so the browser can
+        // discard the promoted layer.
+        window.setTimeout(() => {
+          el.style.willChange = "auto";
+          el.querySelectorAll<HTMLElement>(".reveal-child").forEach((c) => {
+            c.style.willChange = "auto";
+          });
+        }, 900);
+      }
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -10% 0px" },
+  );
+  return sharedObserver;
+}
+
 function useReveal<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
+    const io = getSharedObserver();
+    if (!io) {
       el.classList.add("is-visible");
       return;
     }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-visible");
-            io.unobserve(e.target);
-          }
-        }
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
-    );
     io.observe(el);
-    return () => io.disconnect();
+    return () => io.unobserve(el);
   }, []);
   return ref;
 }
@@ -49,7 +66,7 @@ export function RotatingTaglines() {
         <span
           key={it.k}
           style={{ transitionDelay: `${idx * 70}ms` }}
-          className={`reveal-child cursor-default rounded-full border px-3 py-1.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-foreground hover:text-foreground hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] ${
+          className={`reveal-child cursor-default rounded-full border px-3 py-1.5 [transition:transform_300ms_ease-out,border-color_300ms_ease-out,color_300ms_ease-out,box-shadow_300ms_ease-out] hover:-translate-y-0.5 hover:border-foreground hover:text-foreground hover:shadow-[0_10px_24px_-14px_rgba(0,0,0,0.35)] ${
             i === idx
               ? "border-foreground bg-foreground text-background scale-105"
               : "border-border bg-card"
@@ -109,12 +126,8 @@ export function StepsSection() {
           <div
             key={s.n}
             style={{ transitionDelay: `${idx * 110}ms` }}
-            className="reveal-child group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:border-foreground/40 hover:shadow-[0_30px_60px_-25px_rgba(0,0,0,0.25)]"
+            className="reveal-child group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 [transition:transform_500ms_ease-out,border-color_500ms_ease-out,box-shadow_500ms_ease-out] hover:-translate-y-1.5 hover:border-foreground/40 hover:shadow-[0_30px_60px_-25px_rgba(0,0,0,0.25)]"
           >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-foreground/[0.04] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            />
             <div className="mb-16 font-mono text-xs tracking-widest text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
               {s.n}
             </div>
